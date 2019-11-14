@@ -41,14 +41,19 @@ class aes:
             0xA0, 0xE0, 0x3B, 0x4D, 0xAE, 0x2A, 0xF5, 0xB0, 0xC8, 0xEB, 0xBB, 0x3C, 0x83, 0x53, 0x99, 0x61,
             0x17, 0x2B, 0x04, 0x7E, 0xBA, 0x77, 0xD6, 0x26, 0xE1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0C, 0x7D)
 
-    
+    # plaintext in hex
     def encrypt(self, plaintext):
         xorText = str(self.xor(plaintext, self.key))[2:].zfill(32)
         matrix = self.makeMatrix(xorText)
-        print(matrix)
-        tempMatrix = self.boxSub(matrix)
-        print(tempMatrix)
-    
+        subMatrix = self.boxSub(matrix)
+        print(subMatrix)
+        i = 0
+        while i < 4:
+            subMatrix[i] = self.shift(subMatrix[i,:], i)
+            i += 1
+
+        print(subMatrix)
+    # INPUT string rep of hex no 0x at start
     def makeMatrix(self, input1):
         
         listAdd = []
@@ -62,6 +67,7 @@ class aes:
 
         return numpyMatrix
 
+    # INPUTS: Hex
     def xor(self, input1, input2):
         binary1 = bin(int(input1, 16))[2:].zfill(128) 
         binary2 = bin(int(input2, 16))[2:].zfill(128)
@@ -92,3 +98,15 @@ class aes:
                 j += 1
         
         return inputMatrix
+
+    def shift(self, inputBytes, shiftNum):
+        while shiftNum != 0:
+
+            tempVal = inputBytes[0]
+            inputBytes[0] = inputBytes[1]
+            inputBytes[1] = inputBytes[2]
+            inputBytes[2] = inputBytes[3]
+            inputBytes[3] = tempVal
+            shiftNum += -1
+
+        return inputBytes
