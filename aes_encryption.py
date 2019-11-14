@@ -203,6 +203,11 @@ class aes:
     def mixColumn(self, inputMatrix):
         i = 0
         z = 0
+
+        # Need to make an empty 4x4 numpy matrix for storing the mix column values
+        mixMatrix = numpy.zeros((4,4))
+        print(mixMatrix)
+
         while i < 4:
             row = self.mixConst[i,:]
             col = inputMatrix[:,z]
@@ -218,10 +223,12 @@ class aes:
                     hexVal = hex(int(row[j], 16) * int(col[j], 16))
                     hexValList.append(hexVal)
                 j += 1
-            
-            # We do the multiple XOR step here
-            print(hexValList)
-            
+
+            addValue = 0
+            for value in hexValList:
+                addValue = self.xor(value, str(addValue))
+            print(addValue)
+
             if z == 3:
                 z = 0
                 i += 1
