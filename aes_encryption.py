@@ -205,8 +205,7 @@ class aes:
         z = 0
 
         # Need to make an empty 4x4 numpy matrix for storing the mix column values
-        mixMatrix = numpy.zeros((4,4))
-        print(mixMatrix)
+        mixMatrix = numpy.empty([4,4], dtype = "<U10")
 
         while i < 4:
             row = self.mixConst[i,:]
@@ -227,13 +226,15 @@ class aes:
             addValue = 0
             for value in hexValList:
                 addValue = self.xor(value, str(addValue))
-            print(addValue)
+            mixMatrix[i, z] = addValue[2:].zfill(2)
 
             if z == 3:
                 z = 0
                 i += 1
             else:
                 z += 1
+        
+        print(mixMatrix)
 
 
             
