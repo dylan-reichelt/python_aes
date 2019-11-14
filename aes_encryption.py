@@ -64,7 +64,14 @@ class aes:
             subMatrix[i] = self.shift(subMatrix[i,:], i)
             i += 1
 
-        self.roundkey(self.key, 1)
+        i = 1
+        tempkey = self.key
+        while i < 11:
+            roundkeyTest = self.roundkey(tempkey, i)
+            print(roundkeyTest)
+            tempkey = roundkeyTest
+            i += 1
+        
 
     # INPUT string rep of hex no 0x at start
     def makeMatrix(self, input1):
@@ -115,16 +122,17 @@ class aes:
 
     # Matrix row input and # of shifts for that row
     def shift(self, inputBytes, shiftNum):
+        cpyInput = inputBytes.copy()
         while shiftNum != 0:
 
-            tempVal = inputBytes[0]
-            inputBytes[0] = inputBytes[1]
-            inputBytes[1] = inputBytes[2]
-            inputBytes[2] = inputBytes[3]
-            inputBytes[3] = tempVal
+            tempVal = cpyInput[0]
+            cpyInput[0] = cpyInput[1]
+            cpyInput[1] = cpyInput[2]
+            cpyInput[2] = cpyInput[3]
+            cpyInput[3] = tempVal
             shiftNum += -1
 
-        return inputBytes
+        return cpyInput
 
     def roundkey(self, oldKey, round):
 
@@ -144,7 +152,15 @@ class aes:
         g3 = self.shift(w3, 1)
         g3 = self.roundBoxSub(g3)
         g3 = str(self.xor(self.rconDict[round], "".join(g3)))[2:].zfill(8)
-        print(g3)
+        
+        # multiple xor step
+        w4 = str(self.xor("".join(w0), "".join(g3)))[2:].zfill(8)
+        w5 = str(self.xor("".join(w1), "".join(w4)))[2:].zfill(8)
+        w6 = str(self.xor("".join(w2), "".join(w5)))[2:].zfill(8)
+        w7 = str(self.xor("".join(w3), "".join(w6)))[2:].zfill(8)
+
+        returnList = w4 + w5 + w6 + w7
+        return "".join(returnList)
 
     
     def roundBoxSub(self, byteList):
