@@ -40,19 +40,32 @@ class aes:
             0x60, 0x51, 0x7F, 0xA9, 0x19, 0xB5, 0x4A, 0x0D, 0x2D, 0xE5, 0x7A, 0x9F, 0x93, 0xC9, 0x9C, 0xEF,
             0xA0, 0xE0, 0x3B, 0x4D, 0xAE, 0x2A, 0xF5, 0xB0, 0xC8, 0xEB, 0xBB, 0x3C, 0x83, 0x53, 0x99, 0x61,
             0x17, 0x2B, 0x04, 0x7E, 0xBA, 0x77, 0xD6, 0x26, 0xE1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0C, 0x7D)
+        
+        self.rconDict = {
+            1: "01000000",
+            2: "02000000",
+            3: "04000000",
+            4: "08000000",
+            5: "10000000",
+            6: "20000000",
+            7: "40000000",
+            8: "80000000",
+            9: "1b000000",
+            10: "36000000",
+        }
 
     # plaintext in hex
     def encrypt(self, plaintext):
         xorText = str(self.xor(plaintext, self.key))[2:].zfill(32)
         matrix = self.makeMatrix(xorText)
         subMatrix = self.boxSub(matrix)
-        print(subMatrix)
         i = 0
         while i < 4:
             subMatrix[i] = self.shift(subMatrix[i,:], i)
             i += 1
 
-        print(subMatrix)
+        self.roundkey(self.key, 1)
+
     # INPUT string rep of hex no 0x at start
     def makeMatrix(self, input1):
         
@@ -81,6 +94,7 @@ class aes:
   
         return hex(int(xor, 2))
     
+    # INPUT: matrix 4x4
     def boxSub(self, inputMatrix):
         matCpy = inputMatrix
         i = 0
@@ -99,6 +113,7 @@ class aes:
         
         return inputMatrix
 
+    # Matrix row input and # of shifts for that row
     def shift(self, inputBytes, shiftNum):
         while shiftNum != 0:
 
@@ -110,3 +125,35 @@ class aes:
             shiftNum += -1
 
         return inputBytes
+
+    def roundkey(self, oldKey, round):
+
+
+        hexList = []
+        i = 0
+        while i < len(oldKey):
+            if i % 2 == 0:
+                hexList.append(oldKey[i] + oldKey[i + 1])
+            i += 1
+        
+        w0 = hexList[0:4]
+        w1 = hexList[4:8]
+        w2 = hexList[8:12]
+        w3 = hexList[12:]
+
+        g3 = self.shift(w3, 1)
+        g3 = self.roundBoxSub(g3)
+        g3 = str(self.xor(self.rconDict[round], "".join(g3)))[2:].zfill(8)
+        print(g3)
+
+    
+    def roundBoxSub(self, byteList):
+        returnList = []
+
+        for byte in byteList:
+            decimalValue = int(str(byte), 16)
+            returnList.append(str(hex(self.sBox[decimalValue]))[2:].zfill(2))
+        
+        return returnList
+
+
