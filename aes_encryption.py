@@ -43,7 +43,11 @@ class aes:
 
     
     def encrypt(self, plaintext):
-        print("encrypt")
+        xorText = str(self.xor(plaintext, self.key))[2:].zfill(32)
+        matrix = self.makeMatrix(xorText)
+        print(matrix)
+        tempMatrix = self.boxSub(matrix)
+        print(tempMatrix)
     
     def makeMatrix(self, input1):
         
@@ -55,8 +59,7 @@ class aes:
             i += 1
         
         numpyMatrix = numpy.array([ [listAdd[0], listAdd[4], listAdd[8], listAdd[12]], [listAdd[1], listAdd[5], listAdd[9], listAdd[13]], [listAdd[2], listAdd[6], listAdd[10], listAdd[14]], [listAdd[3], listAdd[7], listAdd[11], listAdd[15]] ])
-        
-        print(numpyMatrix)
+
         return numpyMatrix
 
     def xor(self, input1, input2):
@@ -69,4 +72,23 @@ class aes:
             xor += str(int(binary1[i]) ^ int(binary2[i]))
             i += 1
 
-        return xor
+  
+        return hex(int(xor, 2))
+    
+    def boxSub(self, inputMatrix):
+        matCpy = inputMatrix
+        i = 0
+        j = 0
+
+        for val in numpy.nditer(matCpy):
+            decimalValue = int(str(val), 16)
+            inputMatrix[i,j] = str(hex(self.sBox[decimalValue]))[2:].zfill(2)
+            if j == 3:
+                j = 0
+                i += 1
+                if i == 4:
+                    break
+            else:
+                j += 1
+        
+        return inputMatrix
