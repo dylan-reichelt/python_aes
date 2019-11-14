@@ -68,7 +68,7 @@ class aes:
         i = 1
         textState = xorText
         roundKey = self.key
-        while i < 2:
+        while i < 10:
             stateMatrix = self.makeMatrix(textState)
             # Step 1: Box substitution
             stateMatrix = self.boxSub(stateMatrix)
@@ -81,12 +81,17 @@ class aes:
 
             # Step 3: Mix columns
             stateMatrix = self.mixColumn(stateMatrix)
-            print(stateMatrix)
 
             # Step 4: Round Key XOR
             roundKey = self.roundkey(roundKey, i)
-
+            jumbledText = ""
+            t = 0
+            while t < 4:
+                col = stateMatrix[:,t]
+                jumbledText += "".join(col)
+                t += 1
             
+            textState = str(self.xor(roundKey, jumbledText))[2:].zfill(32)
 
             i += 1
         
@@ -94,7 +99,28 @@ class aes:
 
         #round 10 (final round)
 
+        # Step 1: Box Sub
+        stateMatrix = self.makeMatrix(textState)
+        stateMatrix = self.boxSub(stateMatrix)
+        
+        # Step 2: Shifting
+        j = 0
+        while j < 4:
+            stateMatrix[j] = self.shift(stateMatrix[j,:], j)
+            j += 1
+
+        # Step 3: Round Key XOR
         roundKey = self.roundkey(roundKey, 10)
+        jumbledText = ""
+        
+        i = 0
+        while i < 4:
+            col = stateMatrix[:,i]
+            jumbledText += "".join(col)
+            i += 1
+            
+        textState = str(self.xor(roundKey, jumbledText))[2:].zfill(32)
+        return(textState)
 
         #endround 10
 
