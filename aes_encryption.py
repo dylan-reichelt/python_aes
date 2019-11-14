@@ -80,10 +80,13 @@ class aes:
                 j += 1
 
             # Step 3: Mix columns
-            self.mixColumn(stateMatrix)
+            stateMatrix = self.mixColumn(stateMatrix)
+            print(stateMatrix)
 
             # Step 4: Round Key XOR
             roundKey = self.roundkey(roundKey, i)
+
+            
 
             i += 1
         
@@ -214,15 +217,9 @@ class aes:
             j = 0
             hexValList = []
             while j < 4:
-                if row[j] == "03":
-                    hexVal = hex(2 * int(col[j], 16))
-                    trueResult = self.xor(hexVal, hex(int(col[j], 16)))
-                    hexValList.append(trueResult)
-                else:
-                    hexVal = hex(int(row[j], 16) * int(col[j], 16))
-                    hexValList.append(hexVal)
+                hexValList.append(self.galoisMult(int(row[j], 16), int(col[j], 16)))
                 j += 1
-
+                
             addValue = 0
             for value in hexValList:
                 addValue = self.xor(value, str(addValue))
@@ -234,12 +231,25 @@ class aes:
             else:
                 z += 1
         
-        print(mixMatrix)
+        return(mixMatrix)
 
+    def galoisMult(self, row, col):
+        p = 0
+        hiBitSet = 0
 
-            
+        for i in range(8):
 
-        #print(hex(int(col0[0], 16)))
+            if col & 1 == 1:
+                p ^= row
+
+            hiBitSet = row & 0x80
+            row <<= 1
+
+            if hiBitSet == 0x80:
+                row ^= 0x1b
+
+            col >>= 1
+        return hex(p % 256)
 
         
 
