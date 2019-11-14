@@ -54,23 +54,53 @@ class aes:
             10: "36000000",
         }
 
+        self.mixConst = self.makeMatrix("02010103030201010103020101010302")
+
     # plaintext in hex
     def encrypt(self, plaintext):
-        xorText = str(self.xor(plaintext, self.key))[2:].zfill(32)
-        matrix = self.makeMatrix(xorText)
-        subMatrix = self.boxSub(matrix)
-        i = 0
-        while i < 4:
-            subMatrix[i] = self.shift(subMatrix[i,:], i)
-            i += 1
 
+        #round 0
+
+        xorText = str(self.xor(plaintext, self.key))[2:].zfill(32)
+
+        #end round 0
+        #rounds 1 - 9
         i = 1
-        tempkey = self.key
+        textState = xorText
+        roundKey = self.key
+        while i < 2:
+            stateMatrix = self.makeMatrix(textState)
+            # Step 1: Box substitution
+            stateMatrix = self.boxSub(stateMatrix)
+
+            # Step 2: Shifting
+            j = 0
+            while j < 4:
+                stateMatrix[j] = self.shift(stateMatrix[j,:], j)
+                j += 1
+
+            # Step 3: Mix columns
+            self.mixColumn(stateMatrix)
+
+            # Step 4: Round Key XOR
+            roundKey = self.roundkey(roundKey, i)
+
+            i += 1
+        
+        #end round 1 - 9
+
+        #round 10 (final round)
+
+        roundKey = self.roundkey(roundKey, 10)
+
+        #endround 10
+
+        """
         while i < 11:
             roundkeyTest = self.roundkey(tempkey, i)
-            print(roundkeyTest)
             tempkey = roundkeyTest
             i += 1
+        """
         
 
     # INPUT string rep of hex no 0x at start
@@ -97,7 +127,6 @@ class aes:
         while i < len(binary1):
             xor += str(int(binary1[i]) ^ int(binary2[i]))
             i += 1
-
   
         return hex(int(xor, 2))
     
@@ -136,7 +165,6 @@ class aes:
 
     def roundkey(self, oldKey, round):
 
-
         hexList = []
         i = 0
         while i < len(oldKey):
@@ -171,5 +199,40 @@ class aes:
             returnList.append(str(hex(self.sBox[decimalValue]))[2:].zfill(2))
         
         return returnList
+    
+    def mixColumn(self, inputMatrix):
+        i = 0
+        z = 0
+        while i < 4:
+            row = self.mixConst[i,:]
+            col = inputMatrix[:,z]
+
+            j = 0
+            hexValList = []
+            while j < 4:
+                if row[j] == "03":
+                    hexVal = hex(2 * int(col[j], 16))
+                    trueResult = self.xor(hexVal, hex(int(col[j], 16)))
+                    hexValList.append(trueResult)
+                else:
+                    hexVal = hex(int(row[j], 16) * int(col[j], 16))
+                    hexValList.append(hexVal)
+                j += 1
+            
+            # We do the multiple XOR step here
+            print(hexValList)
+            
+            if z == 3:
+                z = 0
+                i += 1
+            else:
+                z += 1
+
+
+            
+
+        #print(hex(int(col0[0], 16)))
+
+        
 
 
