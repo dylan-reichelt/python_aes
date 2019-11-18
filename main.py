@@ -8,7 +8,8 @@ def main():
 
     #aesBody = aes("general dynamics")
     aesBody = aes("Thats my Kung Fu")
-    print(aesBody.encrypt(hexInput))
+    cypherText = aesBody.encrypt(hexInput)
+    aesBody.decrypt(cypherText)
     
 
 

@@ -58,7 +58,6 @@ class aes:
 
     # plaintext in hex
     def encrypt(self, plaintext):
-
         #round 0
 
         xorText = str(self.xor(plaintext, self.key))[2:].zfill(32)
@@ -76,7 +75,7 @@ class aes:
             # Step 2: Shifting
             j = 0
             while j < 4:
-                stateMatrix[j] = self.shift(stateMatrix[j,:], j)
+                stateMatrix[j] = self.shiftLeft(stateMatrix[j,:], j)
                 j += 1
 
             # Step 3: Mix columns
@@ -106,7 +105,7 @@ class aes:
         # Step 2: Shifting
         j = 0
         while j < 4:
-            stateMatrix[j] = self.shift(stateMatrix[j,:], j)
+            stateMatrix[j] = self.shiftLeft(stateMatrix[j,:], j)
             j += 1
 
         # Step 3: Round Key XOR
@@ -130,6 +129,32 @@ class aes:
             tempkey = roundkeyTest
             i += 1
         """
+
+    def decrypt(self, cyphertext):
+        roundkeys = []
+
+        key = self.key
+        for i in range(11):
+            key = self.roundkey(key, i)
+            roundkeys.insert(0, key)
+        
+        # Round 1:
+
+        # Step 1: Xor roundkey 10 and cyphertext
+        textState = self.xor(roundkeys[0], cyphertext)[2:].zfill(32)
+
+        # Step 2: shift rows back
+        stateMatrix = self.makeMatrix(textState)
+        j = 0
+        while j < 4:
+            stateMatrix[j] = self.shiftRight(stateMatrix[j,:], j)
+            j += 1
+
+        # Step 3: inverse-sBox sub
+        stateMatrix = self.invBoxSub(stateMatrix)
+        print(stateMatrix)
+
+
         
 
     # INPUT string rep of hex no 0x at start
@@ -177,9 +202,27 @@ class aes:
                 j += 1
         
         return inputMatrix
+    
+    def invBoxSub(self, inputMatrix):
+        matCpy = inputMatrix
+        i = 0
+        j = 0
+
+        for val in numpy.nditer(matCpy):
+            decimalValue = int(str(val), 16)
+            inputMatrix[i,j] = str(hex(self.sBox_inv[decimalValue]))[2:].zfill(2)
+            if j == 3:
+                j = 0
+                i += 1
+                if i == 4:
+                    break
+            else:
+                j += 1
+        
+        return inputMatrix
 
     # Matrix row input and # of shifts for that row
-    def shift(self, inputBytes, shiftNum):
+    def shiftLeft(self, inputBytes, shiftNum):
         cpyInput = inputBytes.copy()
         while shiftNum != 0:
 
@@ -191,8 +234,24 @@ class aes:
             shiftNum += -1
 
         return cpyInput
+    
+    # Matrix row input and # of shifts for that row
+    def shiftRight(self, inputBytes, shiftNum):
+        cpyInput = inputBytes.copy()
+        while shiftNum != 0:
+
+            tempVal = cpyInput[3]
+            cpyInput[3] = cpyInput[2]
+            cpyInput[2] = cpyInput[1]
+            cpyInput[1] = cpyInput[0]
+            cpyInput[0] = tempVal
+            shiftNum += -1
+
+        return cpyInput
 
     def roundkey(self, oldKey, round):
+        if round == 0:
+            return oldKey
 
         hexList = []
         i = 0
@@ -206,7 +265,7 @@ class aes:
         w2 = hexList[8:12]
         w3 = hexList[12:]
 
-        g3 = self.shift(w3, 1)
+        g3 = self.shiftLeft(w3, 1)
         g3 = self.roundBoxSub(g3)
         g3 = str(self.xor(self.rconDict[round], "".join(g3)))[2:].zfill(8)
         
