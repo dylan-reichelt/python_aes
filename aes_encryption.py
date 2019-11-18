@@ -177,9 +177,23 @@ class aes:
             stateMatrix = self.invBoxSub(stateMatrix)
 
             tempValue += 1
-        print(stateMatrix)
+        
+        # End Round 1-9
 
-        # End Round 1 - 9
+        # Round 10
+        key = roundkeys[len(roundkeys) - 1]
+        jumbledText = ""
+        for i in range(4):
+            col = stateMatrix[:,i]
+            jumbledText += "".join(col)
+        
+        finalHex = self.xor(jumbledText, key)[2:]
+
+        # End Round 10
+        finalText = bytes.fromhex(finalHex).decode('utf-8')
+        return finalText
+        
+        
 
 
 

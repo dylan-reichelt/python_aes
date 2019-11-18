@@ -6,10 +6,11 @@ def main():
     binaryInput = inputText.encode("utf-8")
     hexInput = binaryInput.hex()
 
-    #aesBody = aes("general dynamics")
-    aesBody = aes("Thats my Kung Fu")
+    aesBody = aes("general dynamics")
     cypherText = aesBody.encrypt(hexInput)
-    aesBody.decrypt(cypherText)
+    print("Encrypted Text: ", cypherText)
+    plaintext = aesBody.decrypt(cypherText)
+    print("Decrypted Text: ", plaintext)
     
 
 
