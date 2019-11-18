@@ -192,12 +192,6 @@ class aes:
         # End Round 10
         finalText = bytes.fromhex(finalHex).decode('utf-8')
         return finalText
-        
-        
-
-
-
-        
 
     # INPUT string rep of hex no 0x at start
     def makeMatrix(self, input1):
