@@ -123,13 +123,6 @@ class aes:
 
         #endround 10
 
-        """
-        while i < 11:
-            roundkeyTest = self.roundkey(tempkey, i)
-            tempkey = roundkeyTest
-            i += 1
-        """
-
     def decrypt(self, cyphertext):
         roundkeys = []
 
@@ -138,21 +131,56 @@ class aes:
             key = self.roundkey(key, i)
             roundkeys.insert(0, key)
         
-        # Round 1:
+        # Round 0
 
         # Step 1: Xor roundkey 10 and cyphertext
         textState = self.xor(roundkeys[0], cyphertext)[2:].zfill(32)
 
         # Step 2: shift rows back
         stateMatrix = self.makeMatrix(textState)
-        j = 0
-        while j < 4:
-            stateMatrix[j] = self.shiftRight(stateMatrix[j,:], j)
-            j += 1
+        tempValue = 0
+        while tempValue < 4:
+            stateMatrix[tempValue] = self.shiftRight(stateMatrix[tempValue,:], tempValue)
+            tempValue += 1
 
         # Step 3: inverse-sBox sub
         stateMatrix = self.invBoxSub(stateMatrix)
+
+        # end round 0
+
+        # Round 1 - 9
+        tempValue = 1
+        while tempValue < 10:
+            key = roundkeys[tempValue]
+        
+            jumbledText = ""
+            column = 0
+            while column < 4:
+                col = stateMatrix[:,column]
+                jumbledText += "".join(col)
+                column += 1
+            
+            # Step 1: XOR key and jumbled text
+            textState = self.xor(jumbledText, key)[2:].zfill(32)
+
+            # Step 2: Inv MixColumn
+            stateMatrix = self.makeMatrix(textState)
+            stateMatrix = self.invMixColumn(stateMatrix)
+
+            # Step 3: Shift Rows Right
+            shiftvalue = 0
+            while shiftvalue < 4:
+                stateMatrix[shiftvalue] = self.shiftRight(stateMatrix[shiftvalue,:], shiftvalue)
+                shiftvalue += 1
+
+            # Step 4: Inv-SBox Sub
+            stateMatrix = self.invBoxSub(stateMatrix)
+
+            tempValue += 1
         print(stateMatrix)
+
+        # End Round 1 - 9
+
 
 
         
@@ -317,6 +345,30 @@ class aes:
                 z += 1
         
         return(mixMatrix)
+
+    def invMixColumn(self, inputMatrix):
+
+        # Need to make an empty 4x4 numpy matrix for storing the mix column values
+        mixMatrix = numpy.empty([4,4], dtype = "<U10")
+
+        i = 0
+        while i < 4:
+            column = inputMatrix[:,i]
+            temp = column.copy()
+            column[0] = str(hex(int(self.galoisMult(int(temp[0], 16),14), 16) ^ int(self.galoisMult(int(temp[3], 16),9), 16) ^ \
+                        int(self.galoisMult(int(temp[2], 16),13), 16) ^ int(self.galoisMult(int(temp[1], 16),11), 16)))[2:].zfill(2)
+            
+            column[1] = str(hex(int(self.galoisMult(int(temp[1], 16),14), 16) ^ int(self.galoisMult(int(temp[0], 16),9), 16) ^ \
+                        int(self.galoisMult(int(temp[3], 16),13), 16) ^ int(self.galoisMult(int(temp[2], 16),11), 16)))[2:].zfill(2)
+            
+            column[2] = str(hex(int(self.galoisMult(int(temp[2], 16),14), 16) ^ int(self.galoisMult(int(temp[1], 16),9), 16) ^ \
+                        int(self.galoisMult(int(temp[0], 16),13), 16) ^ int(self.galoisMult(int(temp[3], 16),11), 16)))[2:].zfill(2)
+            
+            column[3] = str(hex(int(self.galoisMult(int(temp[3], 16),14), 16) ^ int(self.galoisMult(int(temp[2], 16),9), 16) ^ \
+                        int(self.galoisMult(int(temp[1], 16),13), 16) ^ int(self.galoisMult(int(temp[0], 16),11), 16)))[2:].zfill(2)
+            i += 1
+        
+        return(inputMatrix)
 
     def galoisMult(self, row, col):
         p = 0
