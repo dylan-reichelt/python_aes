@@ -2,6 +2,8 @@
 An AES Encryption/Decryption program. This uses the standard 128 bit aes encryption.
 
 ## Installation
+Make sure you have Numpy installed. If you're unsure how to do that go here: https://scipy.org/install.html
+
 
 Download the aes_encryption.py. For global imports run these commands:
 
