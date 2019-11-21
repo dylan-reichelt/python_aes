@@ -39,8 +39,5 @@ print("Decrypted Text: ", plaintext)
 ## Contributing
 Honestly, I won't be working on this too much as it was made as a working test for my Capstone Project. However, if you wish make changes go for it and I will review them when I have time!
 
-
-Please make sure to update tests as appropriate.
-
 ## License
 [MIT](https://choosealicense.com/licenses/mit/)
