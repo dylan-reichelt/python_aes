@@ -25,7 +25,7 @@ Drop aes_encryption.py into this. Now you should be able to import it just like 
 
 NOTE: This will automatically handle any conversions of strings, as well as the 16 byte limit
 of AES is handled as well within. So the text can be greater than 16bytes the encryption and
-decryption will handle that.
+decryption will handle that. The key MUST be 16 bytes however.
 
 
 ```python
