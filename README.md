@@ -23,7 +23,9 @@ Drop aes_encryption.py into this. Now you should be able to import it just like 
 
 ## Usage
 
-NOTE: The key can only be 16 bytes (16 ascii characters) and same with the text to encrypt or decrypt. If you want to do larger items for encryption you'll have to use a loop of some kind to parse the data into 16 byte chunks.
+NOTE: This will automatically handle any conversions of strings, as well as the 16 byte limit
+of AES is handled as well within. So the text can be greater than 16bytes the encryption and
+decryption will handle that.
 
 
 ```python
@@ -31,8 +33,10 @@ from aes_encryption import aes
 
 aesBody = aes("general dynamics")
 
-input = b'this is a test'
-cypherText = aesBody.encrypt(input.hex())
+inputText = sys.argv[1]
+
+aesBody = aes("general dynamics")
+cypherText = aesBody.encrypt(inputText)
 print("Encrypted Text: ", cypherText)
 plaintext = aesBody.decrypt(cypherText)
 print("Decrypted Text: ", plaintext)

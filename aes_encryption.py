@@ -1,5 +1,6 @@
 import binascii
 import numpy
+import sys
 
 class aes:
     def __init__(self, key):
@@ -58,140 +59,44 @@ class aes:
 
     # plaintext in hex
     def encrypt(self, plaintext):
-        #round 0
-
-        xorText = str(self.xor(plaintext, self.key))[2:].zfill(32)
-
-        #end round 0
-        #rounds 1 - 9
-        i = 1
-        textState = xorText
-        roundKey = self.key
-        while i < 10:
-            stateMatrix = self.makeMatrix(textState)
-            # Step 1: Box substitution
-            stateMatrix = self.boxSub(stateMatrix)
-
-            # Step 2: Shifting
-            j = 0
-            while j < 4:
-                stateMatrix[j] = self.shiftLeft(stateMatrix[j,:], j)
-                j += 1
-
-            # Step 3: Mix columns
-            stateMatrix = self.mixColumn(stateMatrix)
-
-            # Step 4: Round Key XOR
-            roundKey = self.roundkey(roundKey, i)
-            jumbledText = ""
-            t = 0
-            while t < 4:
-                col = stateMatrix[:,t]
-                jumbledText += "".join(col)
-                t += 1
-            
-            textState = str(self.xor(roundKey, jumbledText))[2:].zfill(32)
-
-            i += 1
         
-        #end round 1 - 9
+        encryptedData = ""
+        binaryInput = plaintext.encode("utf-8")
+        hexInput = binaryInput.hex()
+        byteList = []
+        tempBytes = ""
 
-        #round 10 (final round)
-
-        # Step 1: Box Sub
-        stateMatrix = self.makeMatrix(textState)
-        stateMatrix = self.boxSub(stateMatrix)
+        for i in range(len(hexInput)):
+            if i % 2 == 0:
+                temp = hexInput[i] + hexInput[i + 1]
+                tempBytes += temp
         
-        # Step 2: Shifting
-        j = 0
-        while j < 4:
-            stateMatrix[j] = self.shiftLeft(stateMatrix[j,:], j)
-            j += 1
-
-        # Step 3: Round Key XOR
-        roundKey = self.roundkey(roundKey, 10)
-        jumbledText = ""
+            if len(tempBytes) == 32:
+                byteList.append(tempBytes)
+                tempBytes = ""
         
-        i = 0
-        while i < 4:
-            col = stateMatrix[:,i]
-            jumbledText += "".join(col)
-            i += 1
-            
-        textState = str(self.xor(roundKey, jumbledText))[2:].zfill(32)
-        return(textState)
+        if tempBytes is not "":
+            byteList.append(tempBytes)
 
-        #endround 10
+        for plaintext in byteList:
+            encryptedData += self.encryptRound(plaintext)
+
+        return encryptedData
 
     def decrypt(self, cyphertext):
-        roundkeys = []
 
-        key = self.key
-        for i in range(11):
-            key = self.roundkey(key, i)
-            roundkeys.insert(0, key)
+        tempBytes = ""
+        decryptedText = ""
+        for i in range(len(cyphertext)):
+            if i % 2 == 0:
+                temp = cyphertext[i] + cyphertext[i + 1]
+                tempBytes += temp
         
-        # Round 0
+            if len(tempBytes) == 32:
+                decryptedText += self.decryptRound(tempBytes)
+                tempBytes = ""
 
-        # Step 1: Xor roundkey 10 and cyphertext
-        textState = self.xor(roundkeys[0], cyphertext)[2:].zfill(32)
-
-        # Step 2: shift rows back
-        stateMatrix = self.makeMatrix(textState)
-        tempValue = 0
-        while tempValue < 4:
-            stateMatrix[tempValue] = self.shiftRight(stateMatrix[tempValue,:], tempValue)
-            tempValue += 1
-
-        # Step 3: inverse-sBox sub
-        stateMatrix = self.invBoxSub(stateMatrix)
-
-        # end round 0
-
-        # Round 1 - 9
-        tempValue = 1
-        while tempValue < 10:
-            key = roundkeys[tempValue]
-        
-            jumbledText = ""
-            column = 0
-            while column < 4:
-                col = stateMatrix[:,column]
-                jumbledText += "".join(col)
-                column += 1
-            
-            # Step 1: XOR key and jumbled text
-            textState = self.xor(jumbledText, key)[2:].zfill(32)
-
-            # Step 2: Inv MixColumn
-            stateMatrix = self.makeMatrix(textState)
-            stateMatrix = self.invMixColumn(stateMatrix)
-
-            # Step 3: Shift Rows Right
-            shiftvalue = 0
-            while shiftvalue < 4:
-                stateMatrix[shiftvalue] = self.shiftRight(stateMatrix[shiftvalue,:], shiftvalue)
-                shiftvalue += 1
-
-            # Step 4: Inv-SBox Sub
-            stateMatrix = self.invBoxSub(stateMatrix)
-
-            tempValue += 1
-        
-        # End Round 1-9
-
-        # Round 10
-        key = roundkeys[len(roundkeys) - 1]
-        jumbledText = ""
-        for i in range(4):
-            col = stateMatrix[:,i]
-            jumbledText += "".join(col)
-        
-        finalHex = self.xor(jumbledText, key)[2:]
-
-        # End Round 10
-        finalText = bytes.fromhex(finalHex).decode('utf-8')
-        return finalText
+        return decryptedText
 
     # INPUT string rep of hex no 0x at start
     def makeMatrix(self, input1):
@@ -395,6 +300,142 @@ class aes:
 
             col >>= 1
         return hex(p % 256)
+    
+    def encryptRound(self, sixteenByte):
+        #round 0
+
+        xorText = str(self.xor(sixteenByte, self.key))[2:].zfill(32)
+
+        #end round 0
+        #rounds 1 - 9
+        i = 1
+        textState = xorText
+        roundKey = self.key
+        while i < 10:
+            stateMatrix = self.makeMatrix(textState)
+            # Step 1: Box substitution
+            stateMatrix = self.boxSub(stateMatrix)
+
+            # Step 2: Shifting
+            j = 0
+            while j < 4:
+                stateMatrix[j] = self.shiftLeft(stateMatrix[j,:], j)
+                j += 1
+
+            # Step 3: Mix columns
+            stateMatrix = self.mixColumn(stateMatrix)
+
+            # Step 4: Round Key XOR
+            roundKey = self.roundkey(roundKey, i)
+            jumbledText = ""
+            t = 0
+            while t < 4:
+                col = stateMatrix[:,t]
+                jumbledText += "".join(col)
+                t += 1
+            
+            textState = str(self.xor(roundKey, jumbledText))[2:].zfill(32)
+
+            i += 1
+        
+        #end round 1 - 9
+
+        #round 10 (final round)
+
+        # Step 1: Box Sub
+        stateMatrix = self.makeMatrix(textState)
+        stateMatrix = self.boxSub(stateMatrix)
+        
+        # Step 2: Shifting
+        j = 0
+        while j < 4:
+            stateMatrix[j] = self.shiftLeft(stateMatrix[j,:], j)
+            j += 1
+
+        # Step 3: Round Key XOR
+        roundKey = self.roundkey(roundKey, 10)
+        jumbledText = ""
+        
+        i = 0
+        while i < 4:
+            col = stateMatrix[:,i]
+            jumbledText += "".join(col)
+            i += 1
+            
+        textState = str(self.xor(roundKey, jumbledText))[2:].zfill(32)
+        return(textState)
+
+        #endround 10
+
+    def decryptRound(self, cyphertext):
+        roundkeys = []
+
+        key = self.key
+        for i in range(11):
+            key = self.roundkey(key, i)
+            roundkeys.insert(0, key)
+        
+        # Round 0
+
+        # Step 1: Xor roundkey 10 and cyphertext
+        textState = self.xor(roundkeys[0], cyphertext)[2:].zfill(32)
+
+        # Step 2: shift rows back
+        stateMatrix = self.makeMatrix(textState)
+        tempValue = 0
+        while tempValue < 4:
+            stateMatrix[tempValue] = self.shiftRight(stateMatrix[tempValue,:], tempValue)
+            tempValue += 1
+
+        # Step 3: inverse-sBox sub
+        stateMatrix = self.invBoxSub(stateMatrix)
+
+        # end round 0
+
+        # Round 1 - 9
+        tempValue = 1
+        while tempValue < 10:
+            key = roundkeys[tempValue]
+        
+            jumbledText = ""
+            column = 0
+            while column < 4:
+                col = stateMatrix[:,column]
+                jumbledText += "".join(col)
+                column += 1
+            
+            # Step 1: XOR key and jumbled text
+            textState = self.xor(jumbledText, key)[2:].zfill(32)
+
+            # Step 2: Inv MixColumn
+            stateMatrix = self.makeMatrix(textState)
+            stateMatrix = self.invMixColumn(stateMatrix)
+
+            # Step 3: Shift Rows Right
+            shiftvalue = 0
+            while shiftvalue < 4:
+                stateMatrix[shiftvalue] = self.shiftRight(stateMatrix[shiftvalue,:], shiftvalue)
+                shiftvalue += 1
+
+            # Step 4: Inv-SBox Sub
+            stateMatrix = self.invBoxSub(stateMatrix)
+
+            tempValue += 1
+        
+        # End Round 1-9
+
+        # Round 10
+        key = roundkeys[len(roundkeys) - 1]
+        jumbledText = ""
+        for i in range(4):
+            col = stateMatrix[:,i]
+            jumbledText += "".join(col)
+        
+        finalHex = self.xor(jumbledText, key)[2:]
+
+        # End Round 10
+        finalText = bytes.fromhex(finalHex).decode('utf-8')
+        return finalText
 
         
 
