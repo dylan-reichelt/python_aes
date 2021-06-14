@@ -31,11 +31,9 @@ decryption will handle that. The key MUST be 16 bytes however.
 ```python
 from aes_encryption import aes
 
-aesBody = aes("general dynamics")
-
 inputText = sys.argv[1]
 
-aesBody = aes("general dynamics")
+aesBody = aes("0123456789123456")
 cypherText = aesBody.encrypt(inputText)
 print("Encrypted Text: ", cypherText)
 plaintext = aesBody.decrypt(cypherText)
